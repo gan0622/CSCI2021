@@ -1,0 +1,248 @@
+                              ____________
+
+                               P4 WRITEUP
+                              ____________
+
+
+- Name: (FILL THIS in)
+- NetID: (THE kauf0095 IN kauf0095@umn.edu)
+
+Answer the questions below according to the project specification. Write
+your answers directly in this text file and submit it along with your
+code.
+
+
+PROBLEM 1: matsquare_OPTM()
+===========================
+
+  Do your timing study on csel-keller1250-NN.cselabs.umn.edu
+
+
+(A) Paste Source Code
+~~~~~~~~~~~~~~~~~~~~~
+
+  Paste a copy of your source code for the function `matsquare_OPTM()'
+  int matsquare_VER1(matrix_t mat, matrix_t matsq)
+{
+  // YOUR CODE HERE
+  int rowCount = mat.rows;
+  int colCount = mat.cols;
+
+  for (int i = 0; i < rowCount; i++)
+  {
+    for (int j = 0; j < colCount; j++)
+    {
+      MSET(matsq, i, j, 0);
+    }
+  }
+  // loop unrolling: taking a loop for each iteration divide into 4 seperate
+  // component
+  for (int i = 0; i < rowCount; i++)
+  {
+    for (int j = 0; j < colCount; j++)
+    {
+      int k;
+      int lead = MGET(mat, i, j);
+      for (k = 0; k < rowCount-4; k += 4)
+      {
+        int mik1 = MGET(mat, j, k); // 0 0 
+        int cur1 = MGET(matsq, i, k); // 0 0 
+        MSET(matsq, i, k, cur1 + mik1 * lead); // 0 0
+        if (k + 3 >= rowCount) {
+          if (k + 1 < rowCount) {
+            int mik2 = MGET(mat, j, k + 1); 
+            int cur2 = MGET(matsq, i, k + 1);
+            MSET(matsq, i, k + 1, cur2 + mik2 * lead);
+            if (k + 2 < rowCount)
+            {
+              int mik3 = MGET(mat, j, k + 2);
+              int cur3 = MGET(matsq, i, k + 2);
+              MSET(matsq, i, k + 2, cur3 + mik3 * lead);
+            }
+          }
+          continue;
+        }
+        else
+        {
+          int mik2 = MGET(mat, j, k + 1); 
+          int cur2 = MGET(matsq, i, k + 1); 
+          MSET(matsq, i, k + 1, cur2 + mik2 * lead);  
+          int mik3 = MGET(mat, j, k + 2);
+          int cur3 = MGET(matsq, i, k + 2);
+          MSET(matsq, i, k + 2, cur3 + mik3 * lead);
+          int mik4 = MGET(mat, j, k + 3);
+          int cur4 = MGET(matsq, i, k + 3);
+          MSET(matsq, i, k + 3, cur4 + mik4 * lead);
+        }
+      }
+      for(;k < rowCount; k++){
+          int mik2 = MGET(mat, j, k); 
+          int cur2 = MGET(matsq, i, k); 
+          MSET(matsq, i, k , cur2 + mik2 * lead);
+        }
+    }
+  }
+  return 0;
+}
+
+int matsquare_OPTM(matrix_t mat, matrix_t matsq)
+{
+  if (mat.rows != mat.cols || // must be a square matrix to square it
+      mat.rows != matsq.rows || mat.cols != matsq.cols)
+  {
+    printf("matsquare_OPTM: dimension mismatch\n");
+    return 1;
+  }
+  // Call to some version of optimized code
+  return matsquare_VER1(mat, matsq);
+}
+  
+
+
+(B) Timing on csel-kh1250-NN
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Paste a copy of the results of running `matsquare_benchmark' on
+  csel-kh1250-NN.cselabs.umn.edu in the space below which shows how your
+  performance optimizations improved on the baseline codes.
+  
+  SIZE       BASE       OPTM  SPDUP   LOG2 FACTOR POINTS 
+   273 3.7058e-02 1.6887e-02   2.19   1.13   1.00   1.13 
+   512 2.5376e-01 1.1038e-01   2.30   1.20   1.88   2.25 
+   722 6.1990e-01 3.0841e-01   2.01   1.01   2.64   2.66 
+   801 8.4807e-01 4.2396e-01   2.00   1.00   2.93   2.93 
+  1024 2.6532e+00 8.9045e-01   2.98   1.58   3.75   5.91 
+  1101 5.2046e+00 1.1058e+00   4.71   2.23   4.03   9.01 
+  1309 1.3778e+01 1.9093e+00   7.22   2.85   4.79  13.67 
+RAW POINTS: 37.58
+TOTAL POINTS: 35 / 35
+  
+
+
+(C) Optimizations
+~~~~~~~~~~~~~~~~~
+
+  Describe in some detail the optimizations you used to speed the code
+  up.  THE CODE SHOULD CONTAIN SOME COMMENTS already to describe these
+  but in the section below, describe in English the techniques you used
+  to make the code run faster.  Format your descriptions into discrete
+  chunks such as.
+        Optimization 1: Blah bla blah... This should make run
+        faster because yakkety yakeety yak.
+
+        Optimization 2: Blah bla blah... This should make run
+        faster because yakkety yakeety yak.
+
+        ...  Optimization N: Blah bla blah... This should make run
+        faster because yakkety yakeety yak.
+  Full credit solutions will have a least two optimizations and describe
+  WHY these improved performance in at least a couple sentences.
+
+        Optimization 1: I used the row major form for the first try. It is
+        faster than the column major form because the cache preloads the data
+        in row major form. we can jump less for computation compared to column 
+        major 
+
+        Optimization 2: The inner loop is unrolled four times. This will make
+        it faster since the program will compute multiple computation in 
+        parallele once. its also called pipelining.
+
+
+PROBLEM 2: Timing Search Algorithms
+===================================
+
+  Do your timing study on csel-kh1250-NN.cselabs.umn.edu. In most cases,
+  report times larger than 1e-03 seconds as times shorter than this are
+  unreliable. Run searches for more repetitions to lengthen run times.
+
+
+(A) Min Size for Algorithmic Differences
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Determine the size of input array does one start to see a measurable
+  difference in the performance of the linear and logarithmic
+  algorithms.  Produce a timing table which includes all algorithms
+  which clearly demonstrates an uptick in the times associated with some
+  while others remain much lower.  Identify what size this appears to be
+  a occur.
+
+  gan00008@csel-kh1250-10:~/csci2021/p4-code$ ./search_benchmark 9 16 1 
+LENGTH  SEARCHES     array      list    binary      tree
+   512   1024 8.3300e-04 2.0670e-03 1.7500e-04 1.4100e-04 
+  1024   2048 9.8400e-04 1.7830e-03 6.9000e-05 6.1000e-05 
+  2048   4096 2.5100e-03 1.9430e-02 1.6500e-04 1.2800e-04 
+  4096   8192 9.7810e-03 1.0505e-01 3.5400e-04 2.7200e-04 
+  8192  16384 3.8551e-02 5.1462e-01 7.1700e-04 5.6500e-04 
+ 16384  32768 1.5401e-01 3.6681e+00 1.4560e-03 1.2310e-03 
+ 32768  65536 6.2917e-01 1.7036e+01 2.8310e-03 2.7120e-03 
+ 65536 131072 2.4851e+00 4.3577e+01 5.8410e-03 5.2480e-03
+
+ As we can see above as the length increases, there is a obvious time difference
+ between linear algorithms (array and linkedlist). On the contray, there is no a big 
+ difference between logarithmic algorithms (binary and tree). We can see logarithmic algorithms
+ is much more faster than linear algorithms at length 65536
+  
+
+
+(B) Linear Search in List vs Array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Determine whether the linear array and linked list search remain
+  approximately at the same performance level as size increases to large
+  data or whether one begins to become favorable over other. Determine
+  the approximate size at which this divergence becomes obvious. Discuss
+  reasons WHY this difference arises.
+
+  As we can see above as the length increases, linear array search is
+  faster than linked list search. This divergence becomes obvious at 
+  length 65536. Thats because linear array stores element consecutively 
+  whereas linked list stores element randomly.   
+
+
+(C) Binary Search in Tree vs Array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Compare the binary array search and binary tree search on small to
+  very large arrays. Determine if there is a size at which the
+  performance of these two begins to diverge. If so, describe why this
+  might be happening based on your understanding of the data structures
+  and the memory system. If not, describe why you believe there is
+  little performance difference between the two.
+
+
+  It almost the same performance at any length. Because they both using 
+  binary search algorithms which takes log(n) time
+
+
+(D) Caching Effects on Algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  It is commonly believed that memory systems that feature a Cache will
+  lead to arrays performing faster than linked structures such as Linked
+  Lists and Binary Search Trees. Describe whether your timings confirm
+  or refute this belief.  Address both types of algorithms in your
+  answer:
+  - What effects does Cache have on Linear Search in arrays and lists
+    and why?
+  - What effects does Cache have on Binary Search in arrays and trees
+    and why?
+
+    1. when one array element is in the cache, it is likely that several 
+    others that reside at adjacent addresses are in the cache, too. while
+    linkedlist is a node, it may be allocated anywhere in memory. so it takes 
+    less memory to search in array than list.
+    
+    2. Image while doing the binary search, first we divide into two parts and 
+       search two parts to find out the element that we want. During the process, 
+       it would bounce around so caching doesnt have much impact in this this situation. 
+
+(E) OPTIONAL MAKEUP CREDIT
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  If you decided to make use of a table of function pointers/structs
+  which is worth makeup credit, describe your basic design for this
+  below.
+
+  ####################### YOUR ANSWER HERE #########################
+
+  ##################################################################
