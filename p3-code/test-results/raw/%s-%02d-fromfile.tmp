@@ -1,0 +1,20 @@
+{
+    // Check sensor value of 0 and status of 1 to turn to Farenheit
+    THERMO_SENSOR_PORT  = 0;
+    THERMO_STATUS_PORT  = 0b0001;
+    THERMO_DISPLAY_PORT = -1;
+    temp_t *actual = calloc(1,sizeof(temp_t));
+    int ret = set_temp_from_ports(actual);
+    printf("ret: %d\n",ret);
+    printf("actual = "); print_temp(*actual);
+    print_ports();
+    free(actual);
+}
+ret: 0
+actual = {
+  .tenths_degrees = -580,
+  .is_fahrenheit  = 1,
+}
+THERMO_SENSOR_PORT   : 0
+THERMO_STATUS_PORT   : 00000001
+THERMO_DISPLAY_PORT  : 11111111111111111111111111111111
